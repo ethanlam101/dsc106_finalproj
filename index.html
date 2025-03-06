@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stress and Exercise Trajectory Explorer</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="container">
+        <h1>Stress and Exercise Trajectory Explorer</h1>
+
+        <div class="controls">
+            <label for="subjectSelect">Select Subject:</label>
+            <select id="subjectSelect"></select>
+
+            <label for="sessionSelect">Select Session:</label>
+            <select id="sessionSelect">
+                <option value="STRESS">Stress</option>
+                <option value="AEROBIC">Aerobic</option>
+                <option value="ANAEROBIC">Anaerobic</option>
+            </select>
+
+            <button id="playPauseBtn">Play</button>
+        </div>
+
+        <svg id="scatterPlot"></svg>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="global.js"></script>
+</body>
+</html>
