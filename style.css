@@ -83,3 +83,28 @@ p {
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
 }
+
+.fade-in-text {
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.fade-in-text.visible {
+    opacity: 1;
+}
+
+.highlighted {
+    font-weight: bold;
+}
+
+.scroll-indicator-admission {
+    animation: bounce 2s infinite;
+    font-size: 1.5em;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.scroll-indicator-admission.visible {
+    opacity: 1;
+}
