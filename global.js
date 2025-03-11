@@ -1,7 +1,11 @@
-let x, y, bins, svg, height, width, x1, bars, animationTimeout;
+let x, y, bins, svg, height, width, x1, bars, admissionTimeout, diagnosesTimeout;
 let svgDiagnoses, dots, dxData;
-let hasAnimated = false; // Ensure animation only happens once
 let currentDiagnosisIndex = 0;
+
+let hasAnimatedAdmissions = false;
+let hasAnimatedDiagnoses = false;
+
+const colorScale = d3.scaleOrdinal(d3.schemePaired); 
 
 // Add tooltip div (hidden by default)
 const tooltip = d3.select("body").append("div")
@@ -238,12 +242,12 @@ function drawAdmissionGraph() {
     });
 }
 
-// Animate the diagnoses data
-function animateDiagnoses() {
+// Draw Diagnoses visualization
+function drawDiagnosesGraph() {
     d3.csv("dx_group_counts.csv").then(function(data) {
         dxData = data.map(d => ({
             dx_group: d.dx_group.trim(),
-            count: Math.ceil(+d.count / 3) // 1 dot represents 5 people
+            count: Math.ceil(+d.count / 5) // 1 dot represents 5 people
         }));
 
         if (dxData.length === 0) {
@@ -258,9 +262,9 @@ function animateDiagnoses() {
             }
         });
 
-        const margin = { top: 10, right: 50, bottom: 10, left: 20 };
+        const margin = { top: 40, right: 50, bottom: 10, left: 50 };
         const width = 800 - margin.left - margin.right; 
-        const height = 600 - margin.top - margin.bottom;
+        const height = 1000 - margin.top - margin.bottom;
 
         svgDiagnoses = d3.select("#diagnoses-vis")
             .append("svg")
@@ -270,16 +274,12 @@ function animateDiagnoses() {
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const colorScale = d3.scaleOrdinal()
-            .domain(dxData.map(d => d.dx_group))
-            .range(d3.schemeCategory10);
-
         const totalDots = flattenedData.length;
         const columns = Math.ceil(Math.sqrt(totalDots));
         const rows = Math.ceil(totalDots / columns);
 
-        const dotSpacingX = width / columns;
-        const dotSpacingY = (height / rows) + 0.5; 
+        const dotSpacingX = (width / columns) - 0.5;
+        const dotSpacingY = (height / rows) - 11; 
 
         dots = svgDiagnoses.selectAll(".dot")
             .data(flattenedData)
@@ -295,27 +295,44 @@ function animateDiagnoses() {
                 return rowIndex * dotSpacingY + (dotSpacingY / 2);
             })
             .attr("r", 5)
-            .attr("fill", "#b0b0b0") // Start all dots in gray
-            .style("opacity", 0);
+            .attr("fill", "#7d7d7d") // Start all dots in gray
 
-        dots.transition()
-            .duration(1000)
-            .style("opacity", 1);
-
-        // Sequentially color each group with 3-second intervals
-        dxData.forEach((dx, index) => {
-            setTimeout(() => {
-                dots.filter(d => d.dx_group === dx.dx_group)
-                    .transition()
-                    .duration(1000)
-                    .attr("fill", colorScale(dx.dx_group));
-            }, index * 3000);
-        });
     }).catch(function(error) {
         console.error("Error loading the CSV file:", error);
     });
 }
 
+// Animate dots when user reaches the diagnoses slide
+function animateDiagnosesGraph() {
+    const groups = Array.from(new Set(dots.data().map(d => d.dx_group))); // Get unique groups
+
+    groups.forEach((group, index) => {
+        setTimeout(() => {
+            // Highlight dots by group
+            svgDiagnoses.selectAll(".dot")
+                .filter(d => d.dx_group === group)
+                .transition()
+                .duration(1000)
+                .style("opacity", 1)
+                .attr("fill", colorScale(group));
+
+            // Show label on the left
+            svgDiagnoses.select(".group-label")
+                .selectAll("text")
+                .data([group])
+                .join("text")
+                .attr("x", -120)
+                .attr("y", index * 30)
+                .attr("fill", colorScale(group))
+                .style("opacity", 0)
+                .text(`${group} group`)
+                .transition()
+                .duration(1000)
+                .style("opacity", 1);
+
+        }, index * 2000); // 2 seconds between groups
+    });
+}
 
 document.addEventListener("DOMContentLoaded", function() {
     const slides = document.querySelectorAll(".slide");
@@ -331,22 +348,24 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
-        // Trigger animation 3 seconds after user sees the admission slide
+        // Trigger admissions animation
         const admissionTop = admissionSlide.getBoundingClientRect().top;
-        if (admissionTop < window.innerHeight * 0.75 && !hasAnimated) {
-            hasAnimated = true;
-            animationTimeout = setTimeout(animateGraphToGender, 3000);
+        if (admissionTop < window.innerHeight * 0.75 && !hasAnimatedAdmissions) {
+            hasAnimatedAdmissions = true;
+            admissionTimeout = setTimeout(animateGraphToGender, 3000);
         }
 
+        // Trigger diagnoses animation
         const diagnosesTop = diagnosesSlide.getBoundingClientRect().top;
-        if (diagnosesTop < window.innerHeight * 0.75 && !hasAnimated) {
-            hasAnimated = true;
-            animateDiagnoses();
+        if (diagnosesTop < window.innerHeight * 0.75 && !hasAnimatedDiagnoses) {
+            hasAnimatedDiagnoses = true;
+            diagnosesTimeout = setTimeout(animateDiagnosesGraph, 3000);
         }
+
     };
 
     window.addEventListener("scroll", handleScroll);
     handleScroll();
     drawAdmissionGraph();
-    animateDiagnoses();
+    drawDiagnosesGraph();
 });
