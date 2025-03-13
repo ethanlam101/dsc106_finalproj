@@ -108,3 +108,30 @@ p {
 .scroll-indicator-admission.visible {
     opacity: 1;
 }
+
+#path-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Increased spacing */
+    flex-wrap: wrap; /* Prevents overlap on smaller screens */
+    margin-top: 20px;
+}
+
+.path-btn {
+    font-size: 18px; /* Increased font size */
+    padding: 15px 30px; /* Bigger padding */
+    border: none;
+    border-radius: 10px; /* Rounded corners */
+    background-color: #ff6f61; /* Standout color */
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.path-btn:hover {
+    background-color: #e05248; /* Darker shade on hover */
+    transform: scale(1.05); /* Slight hover effect */
+}

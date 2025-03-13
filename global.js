@@ -334,6 +334,110 @@ function animateDiagnosesGraph() {
     });
 }
 
+// Functionality for "Choose Your Path" Interactive Story
+function setupTakeawaySection() {
+    const organData = {
+        "diet": ["stomach", "liver", "heart"],
+        "exercise": ["heart", "muscles", "joints"],
+        "no-smoking": ["lungs", "throat", "heart"],
+        "screenings": ["breast", "colon", "prostate"]
+    };
+
+    const organNames = {
+        "stomach": "Stomach (GI Health)",
+        "liver": "Liver (Hepatobiliary Health)",
+        "heart": "Heart (Cardiovascular Health)",
+        "muscles": "Muscles (Physical Strength)",
+        "joints": "Joints (Mobility & Flexibility)",
+        "lungs": "Lungs (Respiratory Health)",
+        "throat": "Throat (Oral & Esophageal Health)",
+        "breast": "Breast (Cancer Prevention)",
+        "colon": "Colon (Digestive Health)",
+        "prostate": "Prostate (Men’s Health)"
+    };
+
+    const organVis = d3.select("#organ-visualization")
+        .append("svg")
+        .attr("width", 650)  // Increased width slightly
+        .attr("height", 420) // Increased height slightly
+        .style("display", "block")
+        .style("margin", "auto");
+
+    const organPositions = {
+        "stomach": [300, 250],
+        "liver": [250, 220],
+        "heart": [320, 150],
+        "muscles": [120, 300], // Moved slightly inward
+        "joints": [480, 300],  // Moved slightly inward to avoid cutoff
+        "lungs": [320, 100],
+        "throat": [320, 60],
+        "breast": [350, 270],
+        "colon": [280, 340],  // Adjusted to better fit
+        "prostate": [320, 370]
+    };
+
+    const organRadius = {
+        "stomach": 30,
+        "liver": 30,
+        "heart": 35,
+        "muscles": 40,
+        "joints": 40,
+        "lungs": 35,
+        "throat": 25,
+        "breast": 30,
+        "colon": 30,
+        "prostate": 30
+    };
+
+    // Create organ circles (default gray)
+    const organs = organVis.selectAll("circle")
+        .data(Object.keys(organPositions))
+        .enter()
+        .append("circle")
+        .attr("cx", d => organPositions[d][0])
+        .attr("cy", d => organPositions[d][1])
+        .attr("r", d => organRadius[d]) // Apply different sizes for each organ
+        .attr("fill", "#ccc")
+        .attr("class", "organ");
+
+    // Add organ labels with dynamic spacing
+    organVis.selectAll("text")
+        .data(Object.keys(organPositions))
+        .enter()
+        .append("text")
+        .attr("x", d => {
+            let xPos = organPositions[d][0] + (organRadius[d] + 10);
+            if (d === "joints") xPos -= 60; // Move label left if it's "Joints"
+            if (d === "muscles") xPos += 10; // Minor adjustment for muscles
+            return xPos;
+        })
+        .attr("y", d => organPositions[d][1] + 5)
+        .text(d => organNames[d])
+        .style("font-size", "14px")
+        .style("fill", "#555");
+
+    // Event listener for path selection
+    d3.selectAll(".path-btn").on("click", function () {
+        const selectedPath = d3.select(this).attr("data-prevention");
+
+        // Reset all organs to gray
+        organs.transition()
+            .duration(500)
+            .attr("fill", "#ccc");
+
+        // Highlight related organs
+        organs.filter(d => organData[selectedPath].includes(d))
+            .transition()
+            .duration(500)
+            .attr("fill", "#ff6f61"); // Highlighted color
+    });
+}
+
+
+
+
+
+
 document.addEventListener("DOMContentLoaded", function() {
     const slides = document.querySelectorAll(".slide");
     const admissionSlide = document.getElementById('admission');
@@ -368,4 +472,5 @@ document.addEventListener("DOMContentLoaded", function() {
     handleScroll();
     drawAdmissionGraph();
     drawDiagnosesGraph();
+    setupTakeawaySection();
 });
