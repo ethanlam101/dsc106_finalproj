@@ -431,6 +431,47 @@ function setupTakeawaySection() {
             .duration(500)
             .attr("fill", "#ff6f61"); // Highlighted color
     });
+
+    const facts = {
+        "stomach": "A diet rich in fiber lowers the risk of gastrointestinal cancers.",
+        "liver": "Excessive alcohol consumption increases liver disease risk.",
+        "heart": "30 minutes of exercise daily cuts heart disease risk by 50%.",
+        "muscles": "Regular strength training helps prevent muscle loss and improves metabolism.",
+        "joints": "Low-impact exercises like yoga and swimming help protect joint health.",
+        "lungs": "Smoking accounts for 85% of lung cancer cases.",
+        "throat": "Acid reflux and smoking can increase the risk of throat cancer.",
+        "breast": "Regular mammograms help detect breast cancer early.",
+        "colon": "Screenings reduce colon cancer deaths by 60%.",
+        "prostate": "Men over 50 should get regular prostate exams."
+    };
+    
+    // Append a tooltip div
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("background", "#fff")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "8px")
+        .style("padding", "8px")
+        .style("font-size", "12px")
+        .style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.2)")
+        .style("opacity", 0);
+    
+    // Show tooltip on hover
+    organs.on("mouseover", function (event, d) {
+            tooltip.transition().duration(200).style("opacity", 1);
+            tooltip.html(facts[d])
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mousemove", function (event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                   .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function () {
+            tooltip.transition().duration(200).style("opacity", 0);
+        });
+    
 }
 
 
