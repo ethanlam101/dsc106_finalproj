@@ -135,3 +135,49 @@ p {
     background-color: #e05248; /* Darker shade on hover */
     transform: scale(1.05); /* Slight hover effect */
 }
+
+#health-score-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#health-score-meter {
+    width: 80%;
+    height: 25px;
+    background-color: #ddd;
+    border-radius: 10px;
+    margin: 10px auto;
+    overflow: hidden;
+    position: relative;
+}
+
+#health-score-fill {
+    width: 50%;
+    height: 100%;
+    background-color: red;
+    transition: width 0.5s ease-in-out, background-color 0.5s;
+}
+
+#health-score-value {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+
+#reset-score {
+    display: block;
+    margin: 15px auto;
+    padding: 10px 20px;
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+}
+
+#reset-score:hover {
+    background-color: #cc0000;
+}

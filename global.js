@@ -474,6 +474,37 @@ function setupTakeawaySection() {
     
 }
 
+let healthScore = 50;
+
+function updateHealthScore(change) {
+    healthScore = Math.min(100, Math.max(0, healthScore + change)); // Keep between 0-100
+    d3.select("#health-score-fill")
+        .style("width", healthScore + "%")
+        .style("background-color", healthScore >= 80 ? "green" : healthScore >= 50 ? "yellow" : "red");
+    d3.select("#health-score-value").text(healthScore + "%");
+}
+
+document.addEventListener("click", function (event) {
+    if (event.target.classList.contains("path-btn")) {
+        const selectedPath = event.target.getAttribute("data-prevention");
+        updateHealthScore(10);
+    }
+});
+
+// Reset Health Score
+function resetHealthScore() {
+    healthScore = 50; // Reset to initial value
+    d3.select("#health-score-fill")
+        .style("width", "50%")
+        .style("background-color", "red"); // Reset to starting color
+    d3.select("#health-score-value").text("50%");
+}
+
+// Attach event listener for reset button
+document.getElementById("reset-score").addEventListener("click", resetHealthScore);
+
+
+
 
 
 
