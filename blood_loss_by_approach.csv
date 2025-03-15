@@ -1,0 +1,28 @@
+optype,approach,count,mean
+Biliary/Pancreas,Open,234,471.64529914529913
+Biliary/Pancreas,Robotic,28,183.57142857142858
+Biliary/Pancreas,Videoscopic,207,135.7487922705314
+Breast,Open,200,77.445
+Colorectal,Open,552,195.2481884057971
+Colorectal,Robotic,3,1783.3333333333333
+Colorectal,Videoscopic,254,162.91338582677164
+Hepatic,Open,161,738.0434782608696
+Hepatic,Videoscopic,90,312.68888888888887
+Major resection,Open,61,430.0
+Major resection,Robotic,96,358.75
+Major resection,Videoscopic,310,184.5483870967742
+Minor resection,Open,16,328.75
+Minor resection,Robotic,1,50.0
+Minor resection,Videoscopic,248,121.4475806451613
+Others,Open,381,772.4225721784777
+Others,Robotic,28,293.39285714285717
+Others,Videoscopic,78,188.5897435897436
+Stomach,Open,114,288.6842105263158
+Stomach,Robotic,25,180.16
+Stomach,Videoscopic,321,164.95638629283488
+Thyroid,Open,95,66.42105263157895
+Thyroid,Robotic,24,152.91666666666666
+Thyroid,Videoscopic,6,88.33333333333333
+Transplantation,Open,220,1426.5454545454545
+Transplantation,Videoscopic,113,304.070796460177
+Vascular,Open,121,561.5867768595041

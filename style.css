@@ -44,6 +44,16 @@ body {
     animation: bounce 2s infinite;
     font-size: 1.5em;
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.scroll-indicator.visible {
+    opacity: 1;
+    animation: bounce 2s infinite;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: opacity 2s ease-in-out;
 }
 
 @keyframes bounce {
@@ -93,6 +103,20 @@ p {
     opacity: 1;
 }
 
+.fade-in-text-dia,
+.fade-in-text-emer {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 2s ease-in-out, visibility 2s ease-in-out;
+}
+
+.fade-in-text-dia.visible,
+.fade-in-text-emer.visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 2s ease-in-out, visibility 2s ease-in-out;
+}
+
 .highlighted {
     font-weight: bold;
 }
@@ -107,4 +131,77 @@ p {
 
 .scroll-indicator-admission.visible {
     opacity: 1;
+}
+
+.continue {
+    animation: bounce 2s infinite;
+    font-size: 1.5em;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+.continue.visible {
+    opacity: 1;
+}
+
+/* Parent container for diagnoses and emergency text */
+.text-container {
+    position: relative; /* Establish a positioning context */
+    width: 100%;
+}
+
+/* Diagnoses container */
+#diagnoses-container {
+    display: grid;
+    grid-template-areas:
+        "cancers"
+        "gastrointestinal"
+        "respiratory"
+        "renal"
+        "scroll"; /* Define areas for each text block */
+    gap: 10px; /* Space between elements */
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+}
+
+/* Emergency text container */
+#emergency-text-container {
+    display: grid;
+    grid-template-areas:
+        "emergency"
+        "emergency-2"
+        "emergency-3"
+        "emergency-4"; /* Define areas for each emergency text block */
+    gap: 10px; /* Space between elements */
+    position: absolute; /* Position it absolutely to overlap the diagnoses container */
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+}
+
+/* Hide the diagnoses container when the emergency text is shown */
+#diagnoses-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Show the emergency text container when visible */
+#emergency-text-container.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Bar Chart Styles */
+.bar {
+    fill: #74c0fc; /* Initial color for bars */
+    transition: fill 0.3s ease;
 }

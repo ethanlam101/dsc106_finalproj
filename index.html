@@ -16,12 +16,13 @@
             <p>Explore the intricate journey of a surgical patient, from admission to recovery. 
                 Scroll down to uncover the story behind the data.
             </p>
-            <div class="scroll-indicator" onclick="scrollToSlide('admission')">↓ Scroll to begin</div>
+            <div class="scroll-indicator visible" onclick="scrollToSlide('admission')">↓ Click to begin</div>
         </div>
     </section>
 
     <!-- Admission Slide -->
     <section class="slide" id="admission">
+        <div id="diagnoses-tooltip" class="tooltip"></div>
         <div class="content">
             <h1>Admission</h1>
             <p>Surgical patients tend to be middle-aged on average.</p>
@@ -32,7 +33,7 @@
             between the ages of 30-60
             </p>
             
-            <div id="scroll" class="scroll-indicator-admission" onclick="scrollToSlide('diagnoses')">↓ Scroll to continue</div>
+            <div id="scroll-admission" class="scroll-indicator" onclick="scrollToSlide('diagnoses')">↓ Click to continue</div>
         </div>
         <div class="visual" id="admission-vis"></div>
     </section>
@@ -40,14 +41,59 @@
     <section class="slide" id="diagnoses">
         <div class="content">
             <h1>Diagnoses</h1>
+
             <p>Each dot represents 5 patients that underwent some type of surgery.</p>
-            <p id="blue_dots" class="fade-in-text">Blue dots represent Gastrointestinal (GI) Cancers such as colon cancer, gastric cancer, pancreatic cancer, etc.. 
-            </p>
-            <p id="red_dots" class="fade-in-text">Blue dots represent Gastrointestinal (GI) Cancers such as colon cancer, gastric cancer, pancreatic cancer, etc.. 
-            </p>
-            <!-- <div id="scroll" class="scroll-indicator-admission" onclick="scrollToSlide('admission')">↓ Scroll to continue</div> -->
+
+            <!-- Parent container for diagnoses and emergency text -->
+            <div class="text-container">
+                <div id="diagnoses-container">
+                    <p id="Cancers" class="fade-in-text-dia" style="grid-area: cancers;">Red dots represent cancer diagnoses such as breast cancer, prostate cancer, etc..
+                        These patients represent <strong>54%</strong> of the total patients that underwent surgery.
+                    </p>
+                    <p id="Gastrointestinal Disorders" class="fade-in-text-dia" style="grid-area: gastrointestinal;">Blue dots represent gastrointestinal disorders such as celiac disease, Crohn's disease, hemorrhoids, etc..</p>
+                    <p id="Respiratory Disorders" class="fade-in-text-dia" style="grid-area: respiratory;">Green dots represent respiratory disorders such as asthma, pneumonia, etc..</p>
+                    <p id="Renal and Urinary Disorders" class="fade-in-text-dia" style="grid-area: renal;">The remaining dots represent a variety of conditions, including renal and urinary disorders, cardiovascular and circulatory diseases, gynecological and reproductive health issues, endocrine and metabolic disorders, as well as other diseases and disorders.</p>
+                    <div id="scroll2" class="continue" style="grid-area: scroll;" onclick="emergencyDiagnosesGraph()">Click to Continue</div>
+                </div>
+
+                <div id="emergency-text-container" class="hidden">
+                    <p id="Emergency" class="fade-in-text-emer hidden" style="grid-area: emergency;">Approximately <strong>20%</strong> of these patients underwent emergency surgeries such as trauma, appendicitis, etc..</p>
+                    <p id="Emergency-2" class="fade-in-text-emer hidden" style="grid-area: emergency-2;">These emergency surgeries are performed under time pressure with patients in unstable conditions and carry a higher risk of mortality compared to planned surgeries.</p>
+                    <p id="Emergency-3" class="fade-in-text-emer hidden" style="grid-area: emergency-3;">Renal and Urinary Disorders have the highest proportion of emergency surgeries at <strong>24.39%</strong>.</p>
+                    <p id="Emergency-4" class="fade-in-text-emer hidden" style="grid-area: emergency-4;">It is crucial to prioritize research and preventive measures in the renal and urinary disorders area. By addressing the root causes and improving early intervention strategies, we can reduce the burden of emergency surgeries and enhance patient outcomes.</p>
+                </div>
+
+                <div id="scroll-diagnoses" class="scroll-indicator hidden" onclick="scrollToSlide('surgical-approach')">↓ Click to continue</div>
+            </div>
+
         </div>
         <div class="visual" id="diagnoses-vis"></div>
+    </section>
+
+    <section class="slide" id="surgical-approach">
+        <div class="content">
+            <h1>Surgical Approach</h1>
+
+            <p>Each surgery used a surgical method of either <b>open, videoscopic, or robotic</b>.
+
+                Let's explore the different effects of these methods on patient blood loss.
+            </p>
+
+            <!-- Parent container for diagnoses and emergency text -->
+            <div class="text-container">
+                <div id="surgical-approach-container">
+                    <p id="Cancers" class="fade-in-text-dia" style="grid-area: cancers;">Red dots represent cancer diagnoses such as breast cancer, prostate cancer, etc..
+                        These patients represent <strong>54%</strong> of the total patients that underwent surgery.
+                    </p>
+                    <p id="Gastrointestinal Disorders" class="fade-in-text-dia" style="grid-area: gastrointestinal;">Blue dots represent gastrointestinal disorders such as celiac disease, Crohn's disease, hemorrhoids, etc..</p>
+                    <p id="Respiratory Disorders" class="fade-in-text-dia" style="grid-area: respiratory;">Green dots represent respiratory disorders such as asthma, pneumonia, etc..</p>
+                    <p id="Renal and Urinary Disorders" class="fade-in-text-dia" style="grid-area: renal;">The remaining dots represent a variety of conditions, including renal and urinary disorders, cardiovascular and circulatory diseases, gynecological and reproductive health issues, endocrine and metabolic disorders, as well as other diseases and disorders.</p>
+                    <div id="scroll2" class="continue" style="grid-area: scroll;" onclick="emergencyDiagnosesGraph()">Click to Continue</div>
+                </div>
+            </div>
+
+        </div>
+        <div class="visual" id="surgical-approach-vis"></div>
     </section>
 
     <script src="global.js"></script>

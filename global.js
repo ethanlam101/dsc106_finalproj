@@ -5,7 +5,7 @@ let currentDiagnosisIndex = 0;
 let hasAnimatedAdmissions = false;
 let hasAnimatedDiagnoses = false;
 
-const colorScale = d3.scaleOrdinal(d3.schemePaired); 
+const colorScale = d3.scaleOrdinal(d3.schemeSet1); 
 
 // Add tooltip div (hidden by default)
 const tooltip = d3.select("body").append("div")
@@ -90,8 +90,8 @@ function animateGraphToGender() {
     addTrendLines();
 
     setTimeout(() => {
-        document.getElementById('scroll').classList.add('visible');
-    }, 4000);
+        document.getElementById('scroll-admission').classList.add('visible');
+    }, 2000);
 }
 
 function addTrendLines() {
@@ -245,8 +245,10 @@ function drawAdmissionGraph() {
 // Draw Diagnoses visualization
 function drawDiagnosesGraph() {
     d3.csv("dx_group_counts.csv").then(function(data) {
+        // Process the data
         dxData = data.map(d => ({
             dx_group: d.dx_group.trim(),
+            emop: +d.emop,
             count: Math.ceil(+d.count / 5) // 1 dot represents 5 people
         }));
 
@@ -255,6 +257,7 @@ function drawDiagnosesGraph() {
             return;
         }
 
+        // Flatten the data for dot placement
         const flattenedData = [];
         dxData.forEach(d => {
             for (let i = 0; i < d.count; i++) {
@@ -262,8 +265,9 @@ function drawDiagnosesGraph() {
             }
         });
 
-        const margin = { top: 40, right: 50, bottom: 10, left: 50 };
-        const width = 800 - margin.left - margin.right; 
+        // Set up SVG dimensions
+        const margin = { top: 40, right: 50, bottom: 10, left: 50 }; // Increased left margin for labels
+        const width = 800 - margin.left - margin.right;
         const height = 1000 - margin.top - margin.bottom;
 
         svgDiagnoses = d3.select("#diagnoses-vis")
@@ -274,13 +278,26 @@ function drawDiagnosesGraph() {
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
+        // Calculate dot positions
         const totalDots = flattenedData.length;
         const columns = Math.ceil(Math.sqrt(totalDots));
         const rows = Math.ceil(totalDots / columns);
 
         const dotSpacingX = (width / columns) - 0.5;
-        const dotSpacingY = (height / rows) - 11; 
+        const dotSpacingY = (height / rows) - 11;
 
+        const diagnosesTooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("position", "absolute")
+            .style("background", "#fff")
+            .style("border", "1px solid #ccc")
+            .style("border-radius", "8px")
+            .style("padding", "8px")
+            .style("font-size", "12px")
+            .style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.2)")
+            .style("opacity", 0);
+
+        // Draw dots
         dots = svgDiagnoses.selectAll(".dot")
             .data(flattenedData)
             .enter()
@@ -296,6 +313,26 @@ function drawDiagnosesGraph() {
             })
             .attr("r", 5)
             .attr("fill", "#7d7d7d") // Start all dots in gray
+            .attr("opacity", 0.7)
+            .on("mouseover", function (event, d) {
+                // Show tooltip on mouseover
+                diagnosesTooltip.transition().duration(200).style("opacity", 1);
+                diagnosesTooltip.html(`
+                    <strong>Diagnosis:</strong> ${d.dx_group}<br>
+                    <strong>Emergency Case:</strong> ${d.emop === 1 ? "Yes" : "No"}
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mousemove", function (event) {
+                // Move tooltip with the mouse
+                diagnosesTooltip.style("left", (event.pageX + 10) + "px")
+                                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                // Hide tooltip on mouseout
+                diagnosesTooltip.transition().duration(200).style("opacity", 0);
+            })
 
     }).catch(function(error) {
         console.error("Error loading the CSV file:", error);
@@ -305,6 +342,7 @@ function drawDiagnosesGraph() {
 // Animate dots when user reaches the diagnoses slide
 function animateDiagnosesGraph() {
     const groups = Array.from(new Set(dots.data().map(d => d.dx_group))); // Get unique groups
+    const totalDuration = groups.length * 1000;
 
     groups.forEach((group, index) => {
         setTimeout(() => {
@@ -316,21 +354,315 @@ function animateDiagnosesGraph() {
                 .style("opacity", 1)
                 .attr("fill", colorScale(group));
 
-            // Show label on the left
-            svgDiagnoses.select(".group-label")
-                .selectAll("text")
-                .data([group])
-                .join("text")
-                .attr("x", -120)
-                .attr("y", index * 30)
-                .attr("fill", colorScale(group))
-                .style("opacity", 0)
-                .text(`${group} group`)
+            document.getElementById(group).classList.add('visible');
+        }, index * 500); // 2 seconds between groups
+    });
+    
+    setTimeout(() => {
+        const scrollElement = document.getElementById('scroll2');
+        if (scrollElement) {
+            scrollElement.classList.add('visible');
+        } else {
+            console.warn('Element with id "scroll" not found.');
+        }
+    }, 2000);
+}
+
+function emergencyDiagnosesGraph() {
+    // Hide the "Click to Continue" button
+    document.getElementById('scroll2').classList.remove('visible');
+
+    // Get unique groups
+    const groups = Array.from(new Set(dots.data().map(d => d.dx_group)));
+
+    // Create an array of promises for each group's animation
+    const groupPromises = groups.map((group, index) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                try {
+                    const groupElement = document.getElementById(group);
+                    if (groupElement) {
+                        groupElement.classList.remove('visible');
+                        console.log(`Hidden group: ${group}`);
+                    } else {
+                        console.warn(`Element with id "${group}" not found.`);
+                    }
+                    resolve(); // Resolve the promise
+                } catch (error) {
+                    console.error(`Error hiding group ${group}:`, error);
+                    resolve(); // Ensure the promise resolves even if there's an error
+                }
+            }, index * 500); // 1 second between groups
+        });
+    });
+
+    // Wait for all group animations to finish
+    Promise.all(groupPromises)
+        .then(() => {
+            console.log("All groups hidden. Resetting dots and showing emergency text.");
+
+            // Hide the diagnoses container
+            const diagnosesContainer = document.getElementById('diagnoses-container');
+            diagnosesContainer.classList.add('hidden');
+
+            // Show the emergency text container
+            const emergencyContainer = document.getElementById('emergency-text-container');
+            emergencyContainer.classList.remove('hidden');
+            emergencyContainer.classList.add('visible');
+
+            // Reset all dots to gray
+            svgDiagnoses.selectAll(".dot")
                 .transition()
                 .duration(1000)
-                .style("opacity", 1);
+                .attr("fill", "#7d7d7d");
 
-        }, index * 2000); // 2 seconds between groups
+            // Highlight emergency surgery dots (emop=1)
+            svgDiagnoses.selectAll(".dot")
+                .filter(d => d.emop === 1)
+                .transition()
+                .duration(1000)
+                .attr("fill", "red"); // Use red for emergency surgeries
+
+            // Show emergency text
+            const emergencyText = document.getElementById('Emergency');
+            if (emergencyText) {
+                emergencyText.classList.remove('hidden');
+                emergencyText.classList.add('visible');
+                console.log("Emergency text shown.");
+            } else {
+                console.warn('Element with id "Emergency" not found.');
+            }
+
+            const emergencyText2 = document.getElementById('Emergency-2');
+            if (emergencyText2) {
+                emergencyText2.classList.remove('hidden');
+                emergencyText2.classList.add('visible');
+                console.log("Emergency text 2 shown.");
+            } else {
+                console.warn('Element with id "Emergency-2" not found.');
+            }
+
+            // Delay showing emergency text 3 and highlighting Renal and Urinary Disorders dots
+            setTimeout(() => {
+                // Show emergency text 3
+                const emergencyText3 = document.getElementById('Emergency-3');
+                if (emergencyText3) {
+                    emergencyText3.classList.remove('hidden');
+                    emergencyText3.classList.add('visible');
+                    console.log("Emergency text 3 shown.");
+                } else {
+                    console.warn('Element with id "Emergency-3" not found.');
+                }
+
+                // Turn all dots gray
+                svgDiagnoses.selectAll(".dot")
+                    .transition()
+                    .duration(1000)
+                    .attr("fill", "#7d7d7d");
+
+                // Highlight Renal and Urinary Disorders dots
+                svgDiagnoses.selectAll(".dot")
+                    .filter(d => d.dx_group === 'Renal and Urinary Disorders')
+                    .transition()
+                    .duration(1000)
+                    .attr("fill", "blue") // Use blue for Renal and Urinary Disorders
+                    .filter(d => d.emop === 1)
+                    .transition()
+                    .duration(1000)
+                    .attr("fill", "red"); // Use red for emergency surgeries
+            }, 2000); // Delay of 2 seconds after emergency text 1 and 2 are shown
+
+            setTimeout(() => {
+                const emergencyText4 = document.getElementById('Emergency-4');
+                emergencyText4.classList.remove('hidden');
+                emergencyText4.classList.add('visible');
+            }, 2000);
+
+            setTimeout(() => {
+                document.getElementById('scroll-diagnoses').classList.remove('hidden');
+                document.getElementById('scroll-diagnoses').classList.add('visible');
+            }, 2000);
+
+        })
+        .catch((error) => {
+            console.error("Error in Promise.all:", error);
+        });
+}  
+
+function drawBarChart() {
+    d3.csv("blood_loss_by_approach.csv").then(function (data) {
+        // Process the data
+        const processedData = d3.groups(data, d => d.optype).map(([optype, values]) => {
+            const totalCount = d3.sum(values, d => +d.count);
+            const openCount = values.find(d => d.approach === "Open")?.count || 0;
+            const roboticCount = values.find(d => d.approach === "Robotic")?.count || 0;
+            const videoscopicCount = values.find(d => d.approach === "Videoscopic")?.count || 0;
+
+            return {
+                optype,
+                totalCount,
+                openProportion: totalCount > 0 ? openCount / totalCount : 0, // Avoid division by zero
+                roboticProportion: totalCount > 0 ? roboticCount / totalCount : 0,
+                videoscopicProportion: totalCount > 0 ? videoscopicCount / totalCount : 0,
+                openMean: values.find(d => d.approach === "Open")?.mean || 0,
+                roboticMean: values.find(d => d.approach === "Robotic")?.mean || 0,
+                videoscopicMean: values.find(d => d.approach === "Videoscopic")?.mean || 0,
+            };
+        });
+
+        console.log("Processed Data:", processedData); // Debugging
+
+        const margin = { top: 50, right: 50, bottom: 70, left: 70 };
+        const width = 800 - margin.left - margin.right;
+        const height = 600 - margin.top - margin.bottom;
+
+        const svg = d3.select("#surgical-approach-vis")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom + 10)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // X-axis scale
+        const x = d3.scaleBand()
+            .domain(processedData.map(d => d.optype)) // Use processedData
+            .range([0, width])
+            .padding(0.2);
+
+        // Y-axis scale
+        const y = d3.scaleLinear()
+            .domain([0, d3.max(processedData, d => d.totalCount)]) // Use processedData
+            .nice()
+            .range([height, 0]);
+
+        // X-axis
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.15em")
+            .attr("transform", "rotate(-45)");
+
+        // Y-axis
+        svg.append("g")
+            .call(d3.axisLeft(y));
+
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height + 75)
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .style("font-weight", "bold")
+            .text("Surgery Type");
+
+        svg.append("text")
+            .attr("x", -height / 2)
+            .attr("y", -50)
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .style("font-weight", "bold")
+            .attr("transform", "rotate(-90)")
+            .text("Count");
+
+        // Draw initial bars
+        const bars = svg.selectAll(".bar")
+            .data(processedData) // Use processedData
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", d => x(d.optype))
+            .attr("y", d => y(d.totalCount))
+            .attr("width", x.bandwidth())
+            .attr("height", d => height - y(d.totalCount))
+            .attr("fill", "#74c0fc");
+
+        // Add tooltips
+        bars.on("mouseover", function (event, d) {
+                const tooltip = d3.select("#tooltip");
+                tooltip.transition().duration(200).style("opacity", 1);
+                tooltip.html(`
+                    <strong>Operation Type:</strong> ${d.optype}<br>
+                    <strong>Total Count:</strong> ${d.totalCount}<br>
+                    <strong>Open Mean Blood Loss:</strong> ${d.openMean.toFixed(2)}<br>
+                    <strong>Robotic Mean Blood Loss:</strong> ${d.roboticMean.toFixed(2)}<br>
+                    <strong>Videoscopic Mean Blood Loss:</strong> ${d.videoscopicMean.toFixed(2)}
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mousemove", function (event) {
+                const tooltip = d3.select("#tooltip");
+                tooltip.style("left", (event.pageX + 10) + "px")
+                       .style("top", (event.pageY - 28) + "px");
+            })
+            .on("mouseout", function () {
+                const tooltip = d3.select("#tooltip");
+                tooltip.transition().duration(200).style("opacity", 0);
+            });
+
+        // Animate the bars to show proportions
+        setTimeout(() => {
+            animateBars(bars, processedData, x, y, height); // Use processedData
+        }, 3000);
+
+    }).catch(function (error) {
+        console.error("Error loading the CSV file:", error);
+    });
+}
+
+function animateBars(bars, data, x, y, height) {
+    bars.each(function (d, i) {
+        const bar = d3.select(this);
+
+        // Ensure proportions are valid numbers
+        const openProportion = d.openProportion || 0;
+        const roboticProportion = d.roboticProportion || 0;
+        const videoscopicProportion = d.videoscopicProportion || 0;
+
+        // Calculate heights
+        const openHeight = height - y(d.totalCount * openProportion);
+        const roboticHeight = height - y(d.totalCount * roboticProportion);
+        const videoscopicHeight = height - y(d.totalCount * videoscopicProportion);
+
+        // Log values for debugging
+        console.log(`Bar ${i}:`, {
+            optype: d.optype,
+            openProportion,
+            roboticProportion,
+            videoscopicProportion,
+            openHeight,
+            roboticHeight,
+            videoscopicHeight,
+        });
+
+        // Animate the bar segments
+        bar.transition()
+            .duration(1000)
+            .attr("y", y(d.totalCount * openProportion))
+            .attr("height", openHeight)
+            .attr("fill", "#74c0fc"); // Color for Open
+
+        bar.append("rect")
+            .attr("x", x(d.optype))
+            .attr("y", y(d.totalCount * openProportion))
+            .attr("width", x.bandwidth())
+            .attr("height", roboticHeight)
+            .attr("fill", "#f783ac") // Color for Robotic
+            .transition()
+            .duration(1000)
+            .attr("y", y(d.totalCount * (openProportion + roboticProportion)));
+
+        bar.append("rect")
+            .attr("x", x(d.optype))
+            .attr("y", y(d.totalCount * (openProportion + roboticProportion)))
+            .attr("width", x.bandwidth())
+            .attr("height", videoscopicHeight)
+            .attr("fill", "#63e6be") // Color for Videoscopic
+            .transition()
+            .duration(1000)
+            .attr("y", y(d.totalCount * (openProportion + roboticProportion + videoscopicProportion)));
     });
 }
 
@@ -338,6 +670,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const slides = document.querySelectorAll(".slide");
     const admissionSlide = document.getElementById('admission');
     const diagnosesSlide = document.getElementById('diagnoses');
+    
 
     // Slide-in effect
     const handleScroll = () => {
@@ -352,14 +685,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const admissionTop = admissionSlide.getBoundingClientRect().top;
         if (admissionTop < window.innerHeight * 0.75 && !hasAnimatedAdmissions) {
             hasAnimatedAdmissions = true;
-            admissionTimeout = setTimeout(animateGraphToGender, 3000);
+            admissionTimeout = setTimeout(animateGraphToGender, 1000);
         }
 
         // Trigger diagnoses animation
         const diagnosesTop = diagnosesSlide.getBoundingClientRect().top;
         if (diagnosesTop < window.innerHeight * 0.75 && !hasAnimatedDiagnoses) {
             hasAnimatedDiagnoses = true;
-            diagnosesTimeout = setTimeout(animateDiagnosesGraph, 3000);
+            diagnosesTimeout = setTimeout(animateDiagnosesGraph, 1000);
         }
 
     };
@@ -368,4 +701,5 @@ document.addEventListener("DOMContentLoaded", function() {
     handleScroll();
     drawAdmissionGraph();
     drawDiagnosesGraph();
+    drawBarChart();
 });
