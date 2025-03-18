@@ -6,6 +6,7 @@
     <title>Surgical Experience</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
 
@@ -22,7 +23,7 @@
 
     <!-- Admission Slide -->
     <section class="slide" id="admission">
-        <div id="diagnoses-tooltip" class="tooltip"></div>
+        <div id="admission-tooltip" class="tooltip"></div>
         <div class="content">
             <h1>Admission</h1>
             <p>Surgical patients tend to be middle-aged on average.</p>
@@ -71,30 +72,68 @@
     </section>
 
     <section class="slide" id="surgical-approach">
+        <div id="surgical-tooltip" class="tooltip"></div>
         <div class="content">
             <h1>Surgical Approach</h1>
 
-            <p>Each surgery used a surgical method of either <b>open, videoscopic, or robotic</b>.
-
-                Let's explore the different effects of these methods on patient blood loss.
+            <p class="intro"> Each surgery used a surgical method of either <b>open, videoscopic, or robotic</b>.
             </p>
 
             <!-- Parent container for diagnoses and emergency text -->
             <div class="text-container">
                 <div id="surgical-approach-container">
-                    <p id="Cancers" class="fade-in-text-dia" style="grid-area: cancers;">Red dots represent cancer diagnoses such as breast cancer, prostate cancer, etc..
-                        These patients represent <strong>54%</strong> of the total patients that underwent surgery.
-                    </p>
-                    <p id="Gastrointestinal Disorders" class="fade-in-text-dia" style="grid-area: gastrointestinal;">Blue dots represent gastrointestinal disorders such as celiac disease, Crohn's disease, hemorrhoids, etc..</p>
-                    <p id="Respiratory Disorders" class="fade-in-text-dia" style="grid-area: respiratory;">Green dots represent respiratory disorders such as asthma, pneumonia, etc..</p>
-                    <p id="Renal and Urinary Disorders" class="fade-in-text-dia" style="grid-area: renal;">The remaining dots represent a variety of conditions, including renal and urinary disorders, cardiovascular and circulatory diseases, gynecological and reproductive health issues, endocrine and metabolic disorders, as well as other diseases and disorders.</p>
-                    <div id="scroll2" class="continue" style="grid-area: scroll;" onclick="emergencyDiagnosesGraph()">Click to Continue</div>
+                    <p id="Surgical-1" class="fade-in-text">Surgeries for colorectal cancer typically employ either an open or videoscopic approach, depending on the patient's condition and surgical requirements.</p>
+                    <p id="Surgical-2" class="fade-in-text">In contrast, breast and vascular surgeries have predominantly relied on the open surgery approach, reflecting the specific technical demands and historical practices in these fields.</p>
+                    <p id="Surgical-3" class="fade-in-text">The robotic surgery approach, while innovative and promising, remains underutilized due to factors such as limited accessibility, high costs, and the need for specialized training and equipment.</p>
                 </div>
             </div>
 
+            <div id="scroll-surgical" class="scroll-indicator hidden" onclick="scrollToSlide('duration-of-stay')">↓ Click to continue</div>
         </div>
+        <div id="legend"></div>
         <div class="visual" id="surgical-approach-vis"></div>
     </section>
+
+    <!-- Duration of Stay Slide -->
+    <section class="slide" id="duration-of-stay">
+        <div class="content">
+            <h1>Duration of Stay</h1>
+            <p>The length of hospital stay varies depending on the length of surgery performed. Surgeries that took longer typically meant longer hospital stays, and surgeries that look less time typicall meant shorter hospital stays. </p>
+            <div id="scroll-duration" class="scroll-indicator hidden" onclick="scrollToSlide('takeaway')">↓ Click to continue</div>
+        </div>
+
+        <div class="visual" id="duration-of-stay-vis">
+            <div id="scatter-plot"></div>
+        </div>
+    </section>
+
+    <!-- Takeaway Slide -->
+    <section class="slide" id="takeaway">
+        <div class="content">
+            <h1>Takeaway</h1>
+            <p>Select a lifestyle choice to see which surgeries it can help prevent.</p>
+            <div id="path-options">
+                <button class="path-btn" data-prevention="diet">Healthy Diet</button>
+                <button class="path-btn" data-prevention="exercise">Regular Exercise</button>
+                <button class="path-btn" data-prevention="no-smoking">Quit Smoking and Alcohol</button>
+                <button class="path-btn" data-prevention="screenings">Regular Screenings</button>
+            </div>
+            <div id="organ-visualization"></div>
+
+            <div id="health-score-container">
+                
+                <p>Your Health Score:</p>
+                <div id="health-score-meter">
+                    <div id="health-score-fill"></div>
+                </div>
+                <p id="health-score-value">50%</p>
+
+                <!-- Reset Button -->
+                <button id="reset-score">Reset Score</button>
+            </div>
+
+        </div>
+     </section>
 
     <script src="global.js"></script>
 </body>

@@ -4,6 +4,7 @@ let currentDiagnosisIndex = 0;
 
 let hasAnimatedAdmissions = false;
 let hasAnimatedDiagnoses = false;
+let hasAnimatedSurgical = false;
 
 const colorScale = d3.scaleOrdinal(d3.schemeSet1); 
 
@@ -342,7 +343,6 @@ function drawDiagnosesGraph() {
 // Animate dots when user reaches the diagnoses slide
 function animateDiagnosesGraph() {
     const groups = Array.from(new Set(dots.data().map(d => d.dx_group))); // Get unique groups
-    const totalDuration = groups.length * 1000;
 
     groups.forEach((group, index) => {
         setTimeout(() => {
@@ -537,6 +537,7 @@ function drawBarChart() {
 
         // X-axis
         svg.append("g")
+            .attr("class", "x-axis-surgical") // Assign the class "x-axis-surgical"
             .attr("transform", `translate(0,${height})`)
             .call(d3.axisBottom(x))
             .selectAll("text")
@@ -544,6 +545,9 @@ function drawBarChart() {
             .attr("dx", "-0.5em")
             .attr("dy", "0.15em")
             .attr("transform", "rotate(-45)");
+
+        // Verify the x-axis group is selected correctly
+        console.log("X-Axis Group:", svg.select(".x-axis-surgical").node());
 
         // Y-axis
         svg.append("g")
@@ -566,111 +570,410 @@ function drawBarChart() {
             .attr("transform", "rotate(-90)")
             .text("Count");
 
-        // Draw initial bars
+        // Draw initial bars (as groups)
         const bars = svg.selectAll(".bar")
-            .data(processedData) // Use processedData
+            .data(processedData)
             .enter()
-            .append("rect")
+            .append("g") // Use a group for each bar
             .attr("class", "bar")
-            .attr("x", d => x(d.optype))
+            .attr("transform", d => `translate(${x(d.optype)}, 0)`); // Position the group
+
+        // Add the initial full-height bar (will be replaced by segments)
+        bars.append("rect")
             .attr("y", d => y(d.totalCount))
             .attr("width", x.bandwidth())
             .attr("height", d => height - y(d.totalCount))
-            .attr("fill", "#74c0fc");
+            .attr("fill", "#74c0fc"); // Initial color
 
-        // Add tooltips
+        // Add tooltips to the bar groups
         bars.on("mouseover", function (event, d) {
-                const tooltip = d3.select("#tooltip");
-                tooltip.transition().duration(200).style("opacity", 1);
-                tooltip.html(`
-                    <strong>Operation Type:</strong> ${d.optype}<br>
-                    <strong>Total Count:</strong> ${d.totalCount}<br>
-                    <strong>Open Mean Blood Loss:</strong> ${d.openMean.toFixed(2)}<br>
-                    <strong>Robotic Mean Blood Loss:</strong> ${d.roboticMean.toFixed(2)}<br>
-                    <strong>Videoscopic Mean Blood Loss:</strong> ${d.videoscopicMean.toFixed(2)}
-                `)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mousemove", function (event) {
-                const tooltip = d3.select("#tooltip");
-                tooltip.style("left", (event.pageX + 10) + "px")
-                       .style("top", (event.pageY - 28) + "px");
-            })
-            .on("mouseout", function () {
-                const tooltip = d3.select("#tooltip");
-                tooltip.transition().duration(200).style("opacity", 0);
-            });
+            const tooltip = d3.select("#surgical-tooltip"); // Use the correct tooltip ID
+            tooltip.transition().duration(200).style("opacity", 1);
+            tooltip.html(`
+                <strong>Operation Type:</strong> ${d.optype}<br>
+                <strong>Total Count:</strong> ${d.totalCount}<br>
+                <strong>Open Proportion:</strong> ${(d.openProportion * 100).toFixed(2)}%<br>
+                <strong>Robotic Proportion:</strong> ${(d.roboticProportion * 100).toFixed(2)}%<br>
+                <strong>Videoscopic Proportion:</strong> ${(d.videoscopicProportion * 100).toFixed(2)}%
+            `)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 3300) + "px");
+        })
+        .on("mousemove", function (event) {
+            const tooltip = d3.select("#surgical-tooltip"); // Use the correct tooltip ID
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 3300) + "px");
+        })
+        .on("mouseout", function () {
+            const tooltip = d3.select("#surgical-tooltip"); // Use the correct tooltip ID
+            tooltip.transition().duration(200).style("opacity", 0);
+        });
 
-        // Animate the bars to show proportions
+        const sortedData = [...processedData].sort((a, b) => b.totalCount - a.totalCount);
+
+        // Animate the bars to their sorted positions, then split into proportions
         setTimeout(() => {
-            animateBars(bars, processedData, x, y, height); // Use processedData
-        }, 3000);
+            animateBars(bars, sortedData, x, y, height, svg); // Use sorted data
+        }, 2000);
 
     }).catch(function (error) {
         console.error("Error loading the CSV file:", error);
     });
 }
 
-function animateBars(bars, data, x, y, height) {
-    bars.each(function (d, i) {
-        const bar = d3.select(this);
+function animateBars(bars, sortedData, x, y, height, svg) {
+    // Update the x-axis domain to reflect the sorted order
+    x.domain(sortedData.map(d => d.optype));
 
-        // Ensure proportions are valid numbers
-        const openProportion = d.openProportion || 0;
-        const roboticProportion = d.roboticProportion || 0;
-        const videoscopicProportion = d.videoscopicProportion || 0;
+    // Update the x-axis visually with a transition
+    svg.select(".x-axis-surgical")
+        .transition()
+        .duration(1000) // Match the duration of the bar animation
+        .call(d3.axisBottom(x)) // Update the axis with the new domain
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-0.5em")
+        .attr("dy", "0.15em")
+        .attr("transform", "rotate(-45)");
 
-        // Calculate heights
-        const openHeight = height - y(d.totalCount * openProportion);
-        const roboticHeight = height - y(d.totalCount * roboticProportion);
-        const videoscopicHeight = height - y(d.totalCount * videoscopicProportion);
+    // Move the bars to their sorted positions
+    bars.data(sortedData, d => d.optype) // Re-bind data with key function
+        .transition()
+        .duration(1000)
+        .attr("transform", d => `translate(${x(d.optype)}, 0)`);
 
-        // Log values for debugging
-        console.log(`Bar ${i}:`, {
-            optype: d.optype,
-            openProportion,
-            roboticProportion,
-            videoscopicProportion,
-            openHeight,
-            roboticHeight,
-            videoscopicHeight,
+    // After the bars are in their sorted positions, split them into proportions
+    setTimeout(() => {
+        bars.each(function (d, i) {
+            const barGroup = d3.select(this); // Select the parent bar group
+
+            // Ensure proportions are valid numbers
+            const openProportion = d.openProportion || 0;
+            const roboticProportion = d.roboticProportion || 0;
+            const videoscopicProportion = d.videoscopicProportion || 0;
+
+            // Calculate heights
+            const openHeight = height - y(d.totalCount * openProportion);
+            const roboticHeight = height - y(d.totalCount * roboticProportion);
+            const videoscopicHeight = height - y(d.totalCount * videoscopicProportion);
+
+            // Create a group for each bar to hold the segments
+            const barSegments = barGroup.append("g")
+                .attr("class", "bar-segments");
+
+            // Add the Open segment
+            barSegments.append("rect")
+                .attr("x", 0) // Set x to 0 (relative to the parent group)
+                .attr("y", height) // Start from the bottom
+                .attr("width", x.bandwidth())
+                .attr("height", 0) // Start with height 0
+                .attr("fill", "#74c0fc") // Color for Open
+                .transition()
+                .duration(1000)
+                .attr("y", y(d.totalCount * openProportion))
+                .attr("height", openHeight);
+
+            // Add the Robotic segment
+            barSegments.append("rect")
+                .attr("x", 0) // Set x to 0 (relative to the parent group)
+                .attr("y", height) // Start from the bottom
+                .attr("width", x.bandwidth())
+                .attr("height", 0) // Start with height 0
+                .attr("fill", "#f783ac") // Color for Robotic
+                .transition()
+                .delay(1000) // Delay to start after Open segment
+                .duration(1000)
+                .attr("y", y(d.totalCount * (openProportion + roboticProportion)))
+                .attr("height", roboticHeight);
+
+            // Add the Videoscopic segment
+            barSegments.append("rect")
+                .attr("x", 0) // Set x to 0 (relative to the parent group)
+                .attr("y", height) // Start from the bottom
+                .attr("width", x.bandwidth())
+                .attr("height", 0) // Start with height 0
+                .attr("fill", "#63e6be") // Color for Videoscopic
+                .transition()
+                .delay(2000) // Delay to start after Robotic segment
+                .duration(1000)
+                .attr("y", y(d.totalCount * (openProportion + roboticProportion + videoscopicProportion)))
+                .attr("height", videoscopicHeight);
         });
+    }, 1000); // Delay the split animation until after the bars are sorted
 
-        // Animate the bar segments
-        bar.transition()
-            .duration(1000)
-            .attr("y", y(d.totalCount * openProportion))
-            .attr("height", openHeight)
-            .attr("fill", "#74c0fc"); // Color for Open
+    // Reveal text elements with delays
+    setTimeout(() => {
+        document.getElementById('Surgical-1').classList.add('visible');
+    }, 1000);
 
-        bar.append("rect")
-            .attr("x", x(d.optype))
-            .attr("y", y(d.totalCount * openProportion))
-            .attr("width", x.bandwidth())
-            .attr("height", roboticHeight)
-            .attr("fill", "#f783ac") // Color for Robotic
-            .transition()
-            .duration(1000)
-            .attr("y", y(d.totalCount * (openProportion + roboticProportion)));
+    setTimeout(() => {
+        document.getElementById('Surgical-2').classList.add('visible');
+    }, 2500);
 
-        bar.append("rect")
-            .attr("x", x(d.optype))
-            .attr("y", y(d.totalCount * (openProportion + roboticProportion)))
-            .attr("width", x.bandwidth())
-            .attr("height", videoscopicHeight)
-            .attr("fill", "#63e6be") // Color for Videoscopic
-            .transition()
-            .duration(1000)
-            .attr("y", y(d.totalCount * (openProportion + roboticProportion + videoscopicProportion)));
-    });
+    setTimeout(() => {
+        document.getElementById('Surgical-3').classList.add('visible');
+    }, 4000);
+
+    setTimeout(() => {
+        document.getElementById('scroll-surgical').classList.remove('hidden');
+        document.getElementById('scroll-surgical').classList.add('visible');
+    }, 6000);
 }
+
+// Functionality for "Choose Your Path" Interactive Story
+function setupTakeawaySection() {
+    const organData = {
+        "diet": ["stomach", "liver", "heart"],
+        "exercise": ["heart", "muscles", "joints"],
+        "no-smoking": ["lungs", "throat", "heart"],
+        "screenings": ["breast", "colon", "prostate"]
+    };
+
+    const organNames = {
+        "stomach": "Stomach (GI Health)",
+        "liver": "Liver (Hepatobiliary Health)",
+        "heart": "Heart (Cardiovascular Health)",
+        "muscles": "Muscles (Physical Strength)",
+        "joints": "Joints (Mobility & Flexibility)",
+        "lungs": "Lungs (Respiratory Health)",
+        "throat": "Throat (Oral & Esophageal Health)",
+        "breast": "Breast (Cancer Prevention)",
+        "colon": "Colon (Digestive Health)",
+        "prostate": "Prostate (Men’s Health)"
+    };
+
+    const organVis = d3.select("#organ-visualization")
+        .append("svg")
+        .attr("width", 650)  // Increased width slightly
+        .attr("height", 420) // Increased height slightly
+        .style("display", "block")
+        .style("margin", "auto");
+
+    const organPositions = {
+        "stomach": [300, 250],
+        "liver": [250, 220],
+        "heart": [320, 150],
+        "muscles": [120, 300], // Moved slightly inward
+        "joints": [480, 300],  // Moved slightly inward to avoid cutoff
+        "lungs": [320, 100],
+        "throat": [320, 60],
+        "breast": [350, 270],
+        "colon": [280, 340],  // Adjusted to better fit
+        "prostate": [320, 370]
+    };
+
+    const organRadius = {
+        "stomach": 30,
+        "liver": 30,
+        "heart": 35,
+        "muscles": 40,
+        "joints": 40,
+        "lungs": 35,
+        "throat": 25,
+        "breast": 30,
+        "colon": 30,
+        "prostate": 30
+    };
+
+    // Create organ circles (default gray)
+    const organs = organVis.selectAll("circle")
+        .data(Object.keys(organPositions))
+        .enter()
+        .append("circle")
+        .attr("cx", d => organPositions[d][0])
+        .attr("cy", d => organPositions[d][1])
+        .attr("r", d => organRadius[d]) // Apply different sizes for each organ
+        .attr("fill", "#ccc")
+        .attr("class", "organ");
+
+    // Add organ labels with dynamic spacing
+    organVis.selectAll("text")
+        .data(Object.keys(organPositions))
+        .enter()
+        .append("text")
+        .attr("x", d => {
+            let xPos = organPositions[d][0] + (organRadius[d] + 10);
+            if (d === "joints") xPos -= 60; // Move label left if it's "Joints"
+            if (d === "muscles") xPos += 10; // Minor adjustment for muscles
+            return xPos;
+        })
+        .attr("y", d => organPositions[d][1] + 5)
+        .text(d => organNames[d])
+        .style("font-size", "14px")
+        .style("fill", "#555");
+
+    // Event listener for path selection
+    d3.selectAll(".path-btn").on("click", function () {
+        const selectedPath = d3.select(this).attr("data-prevention");
+
+        // Reset all organs to gray
+        organs.transition()
+            .duration(500)
+            .attr("fill", "#ccc");
+
+        // Highlight related organs
+        organs.filter(d => organData[selectedPath].includes(d))
+            .transition()
+            .duration(500)
+            .attr("fill", "#ff6f61"); // Highlighted color
+    });
+
+    const facts = {
+        "stomach": "A diet rich in fiber lowers the risk of gastrointestinal cancers.",
+        "liver": "Excessive alcohol consumption increases liver disease risk.",
+        "heart": "30 minutes of exercise daily cuts heart disease risk by 50%.",
+        "muscles": "Regular strength training helps prevent muscle loss and improves metabolism.",
+        "joints": "Low-impact exercises like yoga and swimming help protect joint health.",
+        "lungs": "Smoking accounts for 85% of lung cancer cases.",
+        "throat": "Acid reflux and smoking can increase the risk of throat cancer.",
+        "breast": "Regular mammograms help detect breast cancer early.",
+        "colon": "Screenings reduce colon cancer deaths by 60%.",
+        "prostate": "Men over 50 should get regular prostate exams."
+    };
+    
+    // Append a tooltip div
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("background", "#fff")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "8px")
+        .style("padding", "8px")
+        .style("font-size", "12px")
+        .style("box-shadow", "0px 4px 8px rgba(0, 0, 0, 0.2)")
+        .style("opacity", 0);
+    
+    // Show tooltip on hover
+    organs.on("mouseover", function (event, d) {
+            tooltip.transition().duration(200).style("opacity", 1);
+            tooltip.html(facts[d])
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mousemove", function (event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                   .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function () {
+            tooltip.transition().duration(200).style("opacity", 0);
+        });
+    
+}
+
+let healthScore = 50;
+
+function updateHealthScore(change) {
+    healthScore = Math.min(100, Math.max(0, healthScore + change)); // Keep between 0-100
+    d3.select("#health-score-fill")
+        .style("width", healthScore + "%")
+        .style("background-color", healthScore >= 80 ? "green" : healthScore >= 50 ? "yellow" : "red");
+    d3.select("#health-score-value").text(healthScore + "%");
+}
+
+document.addEventListener("click", function (event) {
+    if (event.target.classList.contains("path-btn")) {
+        const selectedPath = event.target.getAttribute("data-prevention");
+        updateHealthScore(10);
+    }
+});
+
+// Reset Health Score
+function resetHealthScore() {
+    healthScore = 50; // Reset to initial value
+    d3.select("#health-score-fill")
+        .style("width", "50%")
+        .style("background-color", "red"); // Reset to starting color
+    d3.select("#health-score-value").text("50%");
+}
+
+function loadCasesData() {
+    fetch("cases.txt")
+        .then(response => response.text())
+        .then(text => {
+            console.log("Raw cases.txt data:", text); // 🔹 Check if file loads
+
+            let lines = text.split("\n");
+            let data = [];
+
+            for (let i = 1; i < lines.length; i++) { // Skip header
+                let cols = lines[i].split(",");
+                if (cols.length >= 10) {
+                    let caseid = parseInt(cols[0]);
+                    let surgery_duration = parseInt(cols[7]) - parseInt(cols[6]);
+                    let stay_duration = (parseInt(cols[9]) - parseInt(cols[8])) / 1440; // Convert minutes to days
+
+                    if (!isNaN(surgery_duration) && !isNaN(stay_duration) && surgery_duration > 0 && stay_duration > 0) {
+                        data.push({ caseid, surgery_duration, stay_duration });
+                    }
+                }
+            }
+
+            console.log("Processed data for scatter plot:", data); // 🔹 Check if data is valid
+
+            if (data.length === 0) {
+                console.error("No valid data points found!");
+            }
+
+            createScatterPlot(data);
+        })
+        .catch(error => console.error("Error loading cases.txt:", error));
+}
+
+function createScatterPlot(data) {
+    let plotContainer = document.getElementById("scatter-plot");
+
+    if (!plotContainer) {
+        console.error("scatter-plot div not found!");
+        return;
+    }
+
+    let trace = {
+        x: data.map(d => d.surgery_duration),
+        y: data.map(d => d.stay_duration),
+        mode: "markers",
+        type: "scatter",
+        text: data.map(d => `Case ID: ${d.caseid}`),
+        marker: {
+            size: 8, // 🔹 Ensure markers are visible
+            color: "blue",
+            opacity: 0.8
+        }
+    };
+
+    let layout = {
+        title: "Surgery Duration vs. Hospital Stay (Days)",
+        xaxis: {
+            title: "Surgery Duration (minutes)",
+            // Remove or comment out the range property
+            // range: [0, 60000],
+            tickformat: ","
+        },
+        yaxis: {
+            title: "Hospital Stay Duration (Days)",
+            // Remove or comment out the range property
+            // range: [0, 100],
+            tickformat: ","
+        },
+        template: "plotly_white"
+    };
+
+    Plotly.newPlot(plotContainer, [trace], layout);
+
+    setTimeout(() => {
+        document.getElementById('scroll-duration').classList.remove('hidden');
+        document.getElementById('scroll-duration').classList.add('visible');
+    }, 3000);
+}
+
+
+// Attach event listener for reset button
+document.getElementById("reset-score").addEventListener("click", resetHealthScore);
 
 document.addEventListener("DOMContentLoaded", function() {
     const slides = document.querySelectorAll(".slide");
     const admissionSlide = document.getElementById('admission');
     const diagnosesSlide = document.getElementById('diagnoses');
-    
+    const surgicalSlide = document.getElementById('surgical-approach');
 
     // Slide-in effect
     const handleScroll = () => {
@@ -695,11 +998,20 @@ document.addEventListener("DOMContentLoaded", function() {
             diagnosesTimeout = setTimeout(animateDiagnosesGraph, 1000);
         }
 
+        // Trigger diagnoses animation
+        const surgicalTop = surgicalSlide.getBoundingClientRect().top;
+        if (surgicalTop < window.innerHeight * 0.75 && !hasAnimatedSurgical) {
+            hasAnimatedSurgical = true;
+            surgicalTimeout = setTimeout(drawBarChart(), 1000);
+        }
+
     };
 
     window.addEventListener("scroll", handleScroll);
     handleScroll();
     drawAdmissionGraph();
     drawDiagnosesGraph();
-    drawBarChart();
+    setupTakeawaySection();
+    loadCasesData();
+    createScatterPlot();
 });

@@ -14,8 +14,6 @@ Major resection,Videoscopic,310,184.5483870967742
 Minor resection,Open,16,328.75
 Minor resection,Robotic,1,50.0
 Minor resection,Videoscopic,248,121.4475806451613
-Others,Open,381,772.4225721784777
-Others,Robotic,28,293.39285714285717
 Others,Videoscopic,78,188.5897435897436
 Stomach,Open,114,288.6842105263158
 Stomach,Robotic,25,180.16
@@ -26,3 +24,5 @@ Thyroid,Videoscopic,6,88.33333333333333
 Transplantation,Open,220,1426.5454545454545
 Transplantation,Videoscopic,113,304.070796460177
 Vascular,Open,121,561.5867768595041
+Others,Open,381,772.4225721784777
+Others,Robotic,28,293.39285714285717
